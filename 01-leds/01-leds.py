@@ -3,6 +3,10 @@
 import RPi.GPIO as GPIO, time
 import signal
 import sys
+import getopt
+
+#Set to 1 for debug info
+DEBUG=0
 
 def LON(LED): 
     GPIO.output(LED, True)
@@ -57,9 +61,10 @@ OPTIONS:
     -i NR                   number of iterations
     -s NR, --snake=NR       snake; NR=time of LED shift
     -r NR, --snaker=NR      snake reversed; NR=time of LED shift
+    -b NR, --blink=NR       blink all leds
     """
 #create snake like effect
-def snake(sec, repeat, LEDS):
+def snake(wait, repeat, LEDS):
     while (repeat > 0):
         for LED in LEDS:
             LEDact=LED
@@ -67,17 +72,17 @@ def snake(sec, repeat, LEDS):
             try:
                 #if we have same LEDs, skip this iteration (this is for reversed LED list)
                 if LEDprev == LEDact:
-                    print "SAME LEDS (GPIO: %s), skipping iteration" % LEDact
+                    if (DEBUG): print "SAME LEDS (GPIO: %s), skipping iteration" % LEDact
                     continue
                 LOFF(LEDprev)
             except:
                 pass
-            time.sleep(sec)
+            time.sleep(wait)
             LEDprev=LEDact
         repeat -= 1
     LOFFall(LEDS)
 
-def snaker(sec, repeat, LEDS):
+def snaker(wait, repeat, LEDS):
     #remove first and last element from list
     #LEDSr.pop(0)
     #LEDSr.pop()
@@ -85,15 +90,24 @@ def snaker(sec, repeat, LEDS):
     #Join reversed list to LEDS
     LEDSr = LEDS + LEDS[::-1]
     #call snake with joined LEDS + reversed LEDS list
-    snake(sec, repeat, LEDSr)
+    snake(wait, repeat, LEDSr)
 
+def blink(wait, repeat, LEDS):
+    while (repeat > 0):
+        for LED in LEDS:
+            LON(LED)
+        time.sleep(wait)
+        for LED in LEDS:
+            LOFF(LED)
+        time.sleep(wait)
+        repeat -= 1
+    LOFFall(LEDS)
 
-import getopt, sys
 
 def main():
     repeat = 1
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hi:s:r:", ["help", "snake=", "snaker="])
+        opts, args = getopt.getopt(sys.argv[1:], "hi:s:r:b:", ["help", "snake=", "snaker=", "blink="])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(err) # will print something like "option -a not recognized"
@@ -106,6 +120,8 @@ def main():
             snake(float(arg), int(repeat), LEDinit())
         elif opt in ("-r", "--snaker"):
             snaker(float(arg), int(repeat), LEDinit())
+        elif opt in ("-b", "--blink"):
+            blink(float(arg), int(repeat), LEDinit())
         elif opt in ("-h", "--help"):
             usage()
             sys.exit()
