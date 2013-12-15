@@ -4,16 +4,6 @@ import RPi.GPIO as GPIO, time
 import signal
 import sys
 
-#capture ctrl+c and switch off all leds
-def signal_handler(signal, frame):
-    print 'EXIT'
-    LOFFall()
-    sys.exit(0)
-
-#define signal for capturing
-signal.signal(signal.SIGINT, signal_handler)
-
-
 def LON(LED): 
     GPIO.output(LED, True)
     return
@@ -50,6 +40,15 @@ def LEDinit():
 
     return LEDS
  
+#capture ctrl+c and switch off all leds
+def signal_handler(signal, frame):
+    print 'EXIT'
+    LOFFall(LEDinit())
+    sys.exit(0)
+
+#define signal for capturing
+signal.signal(signal.SIGINT, signal_handler)
+
 def usage():
     print """Raspberry PI GPIO LED SCRIPT
 KrisKo 2013
