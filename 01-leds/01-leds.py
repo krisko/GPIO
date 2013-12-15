@@ -37,7 +37,7 @@ def LEDinit():
     LEDg3 = 11
 
     #add led to list
-    LEDS= [ LEDr1, LEDr2, LEDr3, LEDo1, LEDo2, LEDy1, LEDy2, LEDg1, LEDg2, LEDg3 ]
+    LEDS = [ LEDr1, LEDr2, LEDr3, LEDo1, LEDo2, LEDy1, LEDy2, LEDg1, LEDg2, LEDg3 ]
 
     for LED in LEDS:
         GPIO.setup(LED, GPIO.OUT)
@@ -59,6 +59,7 @@ KrisKo 2013
 
 OPTIONS:
     -i NR                   number of iterations
+    -o NR                   time the led are off (matches effect time if not specified)
     -s NR, --snake=NR       snake; NR=time of LED shift
     -r NR, --snaker=NR      snake reversed; NR=time of LED shift
     -b NR, --blink=NR       blink all leds
@@ -93,21 +94,23 @@ def snaker(wait, repeat, LEDS):
     snake(wait, repeat, LEDSr)
 
 def blink(wait, repeat, LEDS):
+    if ( wait[0] == 0 ): wait[0] = wait[1]
     while (repeat > 0):
         for LED in LEDS:
             LON(LED)
-        time.sleep(wait)
+        time.sleep(wait[1])
         for LED in LEDS:
             LOFF(LED)
-        time.sleep(wait)
+        time.sleep(wait[0])
         repeat -= 1
     LOFFall(LEDS)
 
 
 def main():
     repeat = 1
+    woff = 0
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hi:s:r:b:", ["help", "snake=", "snaker=", "blink="])
+        opts, args = getopt.getopt(sys.argv[1:], "hi:o:s:r:b:", ["help", "snake=", "snaker=", "blink="])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(err) # will print something like "option -a not recognized"
@@ -116,12 +119,15 @@ def main():
         #iteration count
         if opt == "-i":
             repeat = arg
+        elif opt == "-o":
+            woff = arg
         elif opt in ("-s", "--snake"):
             snake(float(arg), int(repeat), LEDinit())
         elif opt in ("-r", "--snaker"):
             snaker(float(arg), int(repeat), LEDinit())
         elif opt in ("-b", "--blink"):
-            blink(float(arg), int(repeat), LEDinit())
+            wait = [ float(woff), float(arg) ]
+            blink(wait, int(repeat), LEDinit())
         elif opt in ("-h", "--help"):
             usage()
             sys.exit()
