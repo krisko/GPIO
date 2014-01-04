@@ -16,6 +16,10 @@ def LOFF(LED):
     GPIO.output(LED, False)
     return
 
+def switch(LED):
+    GPIO.output(LED, not GPIO.input(LED))
+    return
+
 def LOFFall(LEDS):
     for LED in LEDS:
         LOFF(LED)
@@ -60,10 +64,18 @@ KrisKo 2013
 OPTIONS:
     -i NR                   number of iterations
     -o NR                   time the led are off (matches effect time if not specified)
+
     -s NR, --snake=NR       snake; NR=time of LED shift
     -r NR, --snaker=NR      snake reversed; NR=time of LED shift
     -b NR, --blink=NR       blink all leds
+    -d NR                   double reversed snake
+
+    -v NR, --variant=NR     0 (default)
+    -f NR, --fullsnake=NR   snake with several variants (0, 1)
+    -g NR                   snake with several variants (0, 1)
     """
+    exit(0)
+
 #create snake like effect
 def snake(wait, repeat, LEDS):
     while (repeat > 0):
@@ -105,12 +117,113 @@ def blink(wait, repeat, LEDS):
         repeat -= 1
     LOFFall(LEDS)
 
+#snake like effect which wont turn off leds
+def fullsnake(wait, repeat, LEDS, variant):
+    if ( variant == 0 ): 
+        LEDSoff = LEDS
+    elif ( variant == 1 ): 
+        LEDSoff = LEDS[::-1]
+
+    while (repeat > 0):
+        for LED in LEDS:
+            LON(LED)
+            time.sleep(wait)
+        for LED in LEDSoff:
+            LOFF(LED)
+            time.sleep(wait)
+        repeat -= 1
+    LOFFall(LEDS)
+
+def gsnake(wait, repeat, LEDS, variant):
+    while (repeat > 0):
+        LEDSrev = LEDS
+        #copy list content
+        LEDScp = LEDS[:]
+
+        for LEDrem in LEDS[::-1]:
+            for LED in LEDScp:
+                LEDact=LED
+                LON(LEDact)
+                try:
+                    #if we have same LEDs, skip this iteration (this is for reversed LED list)
+                    if LEDact == LEDrem:
+                        if (DEBUG): print "SAME LEDS (GPIO: %s), skipping iteration" % LEDact
+                        #if this is the first LED and the last in sequence, dont LOFF it
+                        if LEDact != LEDprev:
+                            LOFF(LEDprev)
+                        time.sleep(wait)
+                        continue
+                    if ( variant == 0 and LEDact != LEDprev ): LOFF(LEDprev)
+                except:
+                    pass
+                time.sleep(wait)
+                LEDprev=LEDact
+            del LEDScp[-1]
+        
+        LEDScp = LEDS[:]
+        if (DEBUG): print "LIST: %s" % LEDScp
+        for LEDrem in LEDS[::-1]:
+            for LED in LEDScp:
+                LEDact=LED
+                LOFF(LEDact)
+                try:
+                    #if we have same LEDs, skip this iteration (this is for reversed LED list)
+                    if LEDact == LEDrem:
+                        if (DEBUG): print "SAME LEDS (GPIO: %s), skipping iteration" % LEDact
+                        #if this is the first LED and the last in sequence, dont LOFF it
+                        if LEDact != LEDprev:
+                            LON(LEDprev)
+                        time.sleep(wait)
+                        continue
+                    if ( variant == 0 and LEDact != LEDprev ): LON(LEDprev)
+                except:
+                    pass
+                time.sleep(wait)
+                LEDprev=LEDact
+            if (DEBUG): print "%s" % LEDScp
+            del LEDScp[-1]
+        repeat -= 1
+    LOFFall(LEDS)
+
+# double reversed snake
+def dsnake(wait, repeat, LEDS):
+    while (repeat > 0):
+        LEDr = LEDS[::-1]
+        for LED in LEDS:
+            LEDact=LED
+            LON(LEDact)
+            LON(LEDr[0])
+            try:
+                #if we have same LEDs, skip this iteration (this is for reversed LED list)
+                if LEDprev == LEDact:
+                    if (DEBUG): print "SAME LEDS (GPIO: %s), skipping iteration" % LEDact
+                    continue
+                #for smoother effect...
+                #if we are not in the middle LOF
+                if ( LEDact != LEDrprev and LEDr[0] != LEDprev ):
+                    LOFF(LEDprev)
+                    LOFF(LEDrprev)
+                #else remove next led in LEDr and skip for loop iteration
+                elif ( LEDact == LEDrprev and LEDr[0] == LEDprev ):
+                    del LEDr[0]
+                    continue
+            except:
+                pass
+            time.sleep(wait)
+            LEDprev=LEDact
+            LEDrprev=LEDr[0]
+            del LEDr[0]
+        repeat -= 1
+    LOFFall(LEDS)
+
+
 
 def main():
     repeat = 1
     woff = 0
+    variant = 0
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hi:o:s:r:b:", ["help", "snake=", "snaker=", "blink="])
+        opts, args = getopt.getopt(sys.argv[1:], "hi:o:s:r:b:v:f:g:d:", ["help", "snake=", "snaker=", "blink=", "variant=", "fullsnake="])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(err) # will print something like "option -a not recognized"
@@ -121,6 +234,8 @@ def main():
             repeat = arg
         elif opt == "-o":
             woff = arg
+        elif opt in ("-v", "--variant"):
+            variant = int(arg)
         elif opt in ("-s", "--snake"):
             snake(float(arg), int(repeat), LEDinit())
         elif opt in ("-r", "--snaker"):
@@ -128,6 +243,12 @@ def main():
         elif opt in ("-b", "--blink"):
             wait = [ float(woff), float(arg) ]
             blink(wait, int(repeat), LEDinit())
+        elif opt in ("-f", "--fullsnake"):
+            fullsnake(float(arg), int(repeat), LEDinit(), variant)
+        elif opt == "-g":
+            gsnake(float(arg), int(repeat), LEDinit(), variant)
+        elif opt in ("-d"):
+            dsnake(float(arg), int(repeat), LEDinit())
         elif opt in ("-h", "--help"):
             usage()
             sys.exit()
