@@ -16,10 +16,6 @@ def LOFF(LED):
     GPIO.output(LED, False)
     return
 
-def switch(LED):
-    GPIO.output(LED, not GPIO.input(LED))
-    return
-
 def LOFFall(LEDS):
     for LED in LEDS:
         LOFF(LED)
