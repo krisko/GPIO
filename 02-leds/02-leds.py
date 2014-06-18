@@ -6,7 +6,7 @@ import sys
 import getopt
 
 #Set to 1 for debug info
-DEBUG=1
+DEBUG=0
 
 def LACTION(LED, SET): 
     GPIO.output(LED, SET)
@@ -81,9 +81,6 @@ def led_action(state, LEDS):
 
 
 def main():
-    repeat = 1
-    woff = 0
-    variant = 0
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hir:y:g:", ["help", "init", "red=", "yellow=", "green="])
     except getopt.GetoptError as err:
