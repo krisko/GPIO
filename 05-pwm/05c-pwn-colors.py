@@ -21,9 +21,9 @@ g.start(0)
 b.start(0)
 
 # initial values
-col_r=0
-col_g=0
-col_b=0
+col_r=-100
+col_g=-100
+col_b=-100
 
 def usage():
     print ('''
@@ -37,19 +37,99 @@ USAGE:
   f     GREEN-
   b     BLUE+
   b     BLUE-
-  h     show tis help
+  a     add colors
+  s     sub colors
+  h     show this help
   q     quit
 
 ''')
 
-# set color intensity (operation add/sub, col_state 0-100, color r/g/b)
-def col_adjust(op, col_state, color):
+# set color intensity (operation add/sub, col_X -100 - +100, color r/g/b)
+def col_adjust(op, col_r, col_g, col_b, color):
     if (op == "add"):
-        col_state+=1
+        if (color == "r") and (col_r < 100):
+            col_r+=1
+        elif (color == "g") and (col_g < 100):
+            col_g+=1
+        elif (color == "b") and (col_b < 100):
+            col_b+=1
     elif (op == "sub"):
-        col_state-=1
-    color.ChangeDutyCycle(col_state)
-    return col_state
+        if (color == "r") and (col_r > -100):
+            col_r-=1
+        elif (color == "g") and (col_g > -100):
+            col_g-=1
+        elif (color == "b") and (col_b > -100):
+            col_b-=1
+    set_color(col_r, col_g, col_b)
+    return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+
+def set_color(col_r, col_g, col_b):
+    if (col_r >= 0):
+        col_r=(col_r*(-1))+100
+    else:
+        col_r+=100
+    if (col_g >= 0):
+        col_g=(col_g*(-1))+100
+    else:
+        col_g+=100
+    if (col_b >= 0):
+        col_b=(col_b*(-1))+100
+    else:
+        col_b+=100
+    r.ChangeDutyCycle(col_r)
+    g.ChangeDutyCycle(col_g)
+    b.ChangeDutyCycle(col_b)
+
+def col_spectrum(op, col_r, col_g, col_b):
+    if (op == "add"):
+        if (col_b < 50) and (col_r != 100 ) and (col_g != 100):
+            col_b+=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        elif (col_b < 100) and (col_r != 100) and (col_g != 100):
+            col_b+=1
+            col_g+=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        elif (col_g < 0) and (col_r != 100):
+            col_g+=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        elif (col_r < 0) and (col_r != 100):
+            col_g+=1
+            col_r+=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        elif (col_r < 100) and (col_r != 100) and (col_b == 100): 
+            col_r+=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        elif (col_g == 100) and (col_r > 0) and (col_b > 0):
+            col_b-=1
+            col_r-=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        else:
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+    elif (op == "sub"):
+        if (col_r != 100) and (col_b != 100) and (col_g == 100):
+            col_b+=1
+            col_r+=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        elif (col_r > 0):
+            col_r-=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        elif (col_r > -100):
+            col_r-=1
+            col_g-=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        elif (col_g > -50):
+            col_g-=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        elif (col_g > -100):
+            col_b-=1
+            col_g-=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        elif (col_b > -100):
+            col_b-=1
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+        else:
+            return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
+
 
 #def signal_handler(signal, frame):
 #    print('You pressed Ctrl+C!')
@@ -86,20 +166,28 @@ print ("Press 'q' to quit, 'h' to show help.")
 # read stdin in a loop
 while True:
     char=func()
-    if char == "r" and col_r < 100:
-        col_r=col_adjust("add", col_r, r)
-    elif char == "e" and col_r > 0:
-        col_r=col_adjust("sub", col_r, r)
-    elif char == "g" and col_g < 100:
-        col_g=col_adjust("add", col_g, g)
-    elif char == "f" and col_g > 0:
-        col_g=col_adjust("sub", col_g, g)
-    elif char == "b" and col_b < 100:
-        col_b=col_adjust("add", col_b, b)
-    elif char == "v" and col_b > 0:
-        col_b=col_adjust("sub", col_b, b)
+    if char == "r":
+        col_new=col_adjust("add", col_r, col_g, col_b, "r")
+    elif char == "e":
+        col_new=col_adjust("sub", col_r, col_g, col_b, "r")
+    elif char == "g":
+        col_new=col_adjust("add", col_r, col_g, col_b, "g")
+    elif char == "f":
+        col_new=col_adjust("sub", col_r, col_g, col_b, "g")
+    elif char == "b":
+        col_new=col_adjust("add", col_r, col_g, col_b, "b")
+    elif char == "v":
+        col_new=col_adjust("sub", col_r, col_g, col_b, "b")
+    elif char == "a":
+        col_new=col_spectrum("add", col_r, col_g, col_b)
+    elif char == "s":
+        col_new=col_spectrum("sub", col_r, col_g, col_b)
     elif char == "h":
         usage()
     else:
         print ("Unknown function or color out of range. Type 'q' to quit")
+    col_b=col_new['col_b']
+    col_g=col_new['col_g']
+    col_r=col_new['col_r']
+    set_color(col_r, col_g, col_b)
     print("COLOR R:", col_r, "G:", col_g, "B:", col_b)

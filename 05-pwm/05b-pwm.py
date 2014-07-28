@@ -23,7 +23,7 @@ b.start(0)              # start white led on 0 percent duty cycle (off)
 # now the fun starts, we'll vary the duty cycle to   
 # dim/brighten the leds, so one is bright while the other is dim  
   
-pause_time = 0.02           # you can change this to slow down/speed up  
+pause_time = 0.05           # you can change this to slow down/speed up  
   
 try:  
 #    while True:  

@@ -29,9 +29,6 @@ EXAMPLE:
 	$0 (char)         toggle color ([r]ed, [g]reen, [b]lue, [y]ellow, [l]ightblue, [p]urple, [w]hite)
 	$0 0.2 (char)...  blink leds, interval 0.2 sec
 	$0 inf 0.3 (char) blink leds, interval 0.3 sec, infite loop
-
-	e.g. double reversed snake
-		$0 inf 0.01 102910382947385647746583749283019201
 EOF
 	exit 0
 }
