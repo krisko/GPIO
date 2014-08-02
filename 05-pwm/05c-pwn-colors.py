@@ -3,6 +3,7 @@
 import RPi.GPIO as GPIO
 from time import sleep
 import signal
+import sys
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -39,6 +40,7 @@ USAGE:
   b     BLUE-
   a     add colors
   s     sub colors
+  c     run automatic cycle
   h     show this help
   q     quit
 
@@ -60,7 +62,7 @@ def col_adjust(op, col_r, col_g, col_b, color):
             col_g-=1
         elif (color == "b") and (col_b > -100):
             col_b-=1
-    set_color(col_r, col_g, col_b)
+    #set_color(col_r, col_g, col_b)
     return {'col_b':col_b, 'col_g':col_g, 'col_r':col_r}
 
 def set_color(col_r, col_g, col_b):
@@ -163,6 +165,42 @@ def func():
 
 print ("Press 'q' to quit, 'h' to show help.")
 
+def cycle(col_r, col_g, col_b):
+    count=1
+    try:
+        time=float(input('sleeptime: '))
+        cycles=int(input('cycles: '))
+    except ValueError:
+        print("Not a number")
+        return 0
+    while (count <= cycles):
+        while (col_r != 100) or (col_b != 100) or (col_g != 100):
+            col_new=col_spectrum("add", col_r, col_g, col_b)
+            col_b=col_new['col_b']
+            col_g=col_new['col_g']
+            col_r=col_new['col_r']
+            set_color(col_r, col_g, col_b)
+            print("color r:", col_r, "g:", col_g, "b:", col_b)
+            sleep(time)
+        while (col_r != 0) or (col_b != 0) or (col_g != 100):
+            col_new=col_spectrum("add", col_r, col_g, col_b)
+            col_b=col_new['col_b']
+            col_g=col_new['col_g']
+            col_r=col_new['col_r']
+            set_color(col_r, col_g, col_b)
+            print("color r:", col_r, "g:", col_g, "b:", col_b)
+            sleep(time)
+        while (col_r != -100) or (col_b != -100) or (col_g != -100):
+            col_new=col_spectrum("sub", col_r, col_g, col_b)
+            col_b=col_new['col_b']
+            col_g=col_new['col_g']
+            col_r=col_new['col_r']
+            set_color(col_r, col_g, col_b)
+            print("color r:", col_r, "g:", col_g, "b:", col_b)
+            sleep(time)
+        count+=1
+
+
 # read stdin in a loop
 while True:
     char=func()
@@ -182,12 +220,20 @@ while True:
         col_new=col_spectrum("add", col_r, col_g, col_b)
     elif char == "s":
         col_new=col_spectrum("sub", col_r, col_g, col_b)
+    elif char == "c":
+        cycle(col_r, col_g, col_b)
+        continue
     elif char == "h":
         usage()
+        continue
     else:
         print ("Unknown function or color out of range. Type 'q' to quit")
+        continue
+
     col_b=col_new['col_b']
     col_g=col_new['col_g']
     col_r=col_new['col_r']
     set_color(col_r, col_g, col_b)
     print("COLOR R:", col_r, "G:", col_g, "B:", col_b)
+
+exit(0)
